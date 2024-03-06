@@ -7,8 +7,11 @@
 #Everything is sourced from the NOAA paleo data archive at: https://www.ncdc.noaa.gov/paleo-search/?dataTypeId=14
 
 #C02 - Zeebe, Richard E., and Lucas J. Lourens. 2019. “Solar System Chaos and the Paleocene–Eocene Boundary Age Constrained by Geology and Astronomy.” Science 365 (6456): 926–29. https://doi.org/10.1126/scie
+
 #Orbital model - Zeebe, Richard E., and Lucas J. Lourens. 2019. “Solar System Chaos and the Paleocene–Eocene Boundary Age Constrained by Geology and Astronomy.” Science 365 (6456): 926–29. https://doi.org/10.1126/science.aax0612.
+
 #dO16 - Huybers, P.  2006. Pleistocene Depth-derived Age Model and Composite d18O Record. IGBP PAGES/World Data Center for Paleoclimatology Data Contribution Series # 2006-075.NOAA/NCDC Paleoclimatology Program, Boulder CO, USA.
+
 #ODP Marine core O isotope record - Lüthi, Dieter, Martine Le Floch, Bernhard Bereiter, Thomas Blunier, Jean-Marc Barnola, Urs Siegenthaler, Dominique Raynaud, et al. 2008. “High-Resolution Carbon Dioxide Concentration Record 650,000–800,000 Years before Present.” Nature 453 (7193): 379–82. https://doi.org/10.1038/nature06949.
 
 #We're going to need to use the z-score function to fit these different measurements on the same scale. 
@@ -23,13 +26,14 @@ zscore<-function(y1) {
 #This is a stack of read.table read.csv commands to pull these different datasets. If you open the original datasets, you might notice that some are comma delimited and other tab delimited.
 #Commands reflect format of file..
 
-CO2=read.csv("data/CO2.csv",header=TRUE)
-orbital=read.table("data/orbital.txt",header=TRUE,sep="")
-dO16=read.table("data/dO16.txt",header=TRUE,sep="")
-odp1143=read.table("data/odp1143-tab.txt",header=TRUE,sep="")
+CO2 = read.csv("data/CO2.csv",header=TRUE)
+orbital = read.table("data/orbital.txt",header=TRUE,sep="")
+dO16 = read.table("data/dO16.txt",header=TRUE,sep="")
+odp1143 = read.table("data/odp1143-tab.txt",header=TRUE,sep="")
+
 #odp1143 record includes -999 values for NA, just exclude them since trying to plot NA causes errors.
 
-odp1143=odp1143[odp1143$d18Oc.wuell>-200,]
+odp1143 =odp1143[odp1143$d18Oc.wuell>-200,]
 odp1143=odp1143[odp1143$d13Cc.wuell>-200,]
 
 #For the first plot, I thought I would zoom in on the Pleistocene. 
@@ -43,22 +47,30 @@ myr25=orbital[orbital$age_kyr<2500,]
 
 #Need to set these on a common scale for comparison using zscore.
 
-z800kyr=as.data.frame(apply(kyr800,2,zscore))
-zCO2=as.data.frame(apply(CO2,2,zscore))
-zdO16_800kyr=as.data.frame(apply(kyr800O16,2,zscore))
+z800kyr = as.data.frame(apply(kyr800, 2, zscore))
+
+zCO2 = as.data.frame(apply(CO2,2,zscore))
+
+zdO16_800kyr = as.data.frame(apply(kyr800O16,2,zscore))
 
 #Plotting is easier if we grab the ages separately and reckon both as kyr. This sets up the 800kyr data. 
 
 CO2age=CO2$Gasage..yr.BP./1000
+
 orbage800kyr=kyr800$age_kyr
+
 dO16age800kyr=kyr800O16$Age
 
 #Flat stacked plot of CO2, orbital eccentricty, and the angle of Earth's axis over the last 800kyr. This is ugly. Perhaps someone else cuold make it more attractive by changing the plotting options.
 
-plot(orbage800kyr,z800kyr$ecc,type="l",lty=2,col="red",ylim=c(-3,3))
+plot(orbage800kyr,z800kyr$ecc,type="l",lty=2,col="red", ylim=c(-3,3))
+
 lines(orbage800kyr,z800kyr$inc_deg,lty=1,col="black",lwd=1.5)
+
 points(CO2age,zCO2$CO2..ppmv.,pch=19,col="blue",cex=0.2)
+
 lines(CO2age,zCO2$CO2..ppmv.,lty=1,col="blue",lwd=0.5)
+
 points(dO16age800kyr,zdO16_800kyr$all_Recs,pch=19,col="dark green",cex=0.2)
 
 # Time to move on to stacked plots of Marine oxygen isotopes and orbital eccentricity.
@@ -66,8 +78,8 @@ points(dO16age800kyr,zdO16_800kyr$all_Recs,pch=19,col="dark green",cex=0.2)
 #We need to grab new ages and zscores for this. 
 #Ages
 
-orbage2mya=myr25$age_kyr
-dO162mya=dO16$Age
+orbage2mya = myr25$age_kyr
+dO162mya = dO16$Age
 
 #Zscores
 
@@ -76,7 +88,16 @@ zdO162mya=as.data.frame(apply(dO16,2,zscore))
 
 #Plots
 
-plot(orbage2mya,zorb2mya$inc_deg,type="l",lty=1,col="orange",ylim=c(-3,3),lwd=2)
+plot(orbage2mya,
+     zorb2mya$inc_deg,
+     type="l",
+     lty=1,
+     col="orange",
+     ylim=c(-3,3),
+     lwd=2)
+
+
+
 lines(dO162mya,zdO162mya$all_Recs,lty=1,col="black",lwd=2)
 lines(CO2age,zCO2$CO2..ppmv.,lty=2,col="blue",lwd=2)
 
@@ -109,18 +130,20 @@ zodp=as.data.frame(apply(odp1143,2,zscore))
 
 #Loess smoothing and prediction object for isotopes.
 
-lodpz=loess(zodp$d18Oc.wuell~odpKyr,span=0.02) #Loess smoothing
+lodpz = loess(zodp$d18Oc.wuell~odpKyr,span=0.02) #Loess smoothing
 prodpz=predict(lodpz)
 
 #To make plotting easier, grab rounded down/up min and max values.
 
 minODP=floor(min(zodp$d18Oc.wuell))
+
 maxODP=ceiling(max(zodp$d18Oc.wuell))
 
-minORB=floor(min(zorb5mya$inc_deg))
+minORB=floor(min(zorb5mya$inc_deg)) #bad job, chris, these are confusing object names.
+
 maxORB=ceiling(max(zorb5mya$inc_deg))
 
-#Plot w/offset between different vectors.
+#Plot w/offset between different variables.
 
 plot(odpKyr,
      zodp$d18Oc.wuell,
